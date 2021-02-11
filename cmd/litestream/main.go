@@ -106,10 +106,12 @@ type Config struct {
 	DBs []*DBConfig `yaml:"dbs"`
 
 	// Global S3 settings
-	AccessKeyID     string `yaml:"access-key-id"`
-	SecretAccessKey string `yaml:"secret-access-key"`
-	Region          string `yaml:"region"`
-	Bucket          string `yaml:"bucket"`
+	AccessKeyID      string `yaml:"access-key-id"`
+	SecretAccessKey  string `yaml:"secret-access-key"`
+	Region           string `yaml:"region"`
+	Bucket           string `yaml:"bucket"`
+	Endpoint         string `yaml:"endpoint"`
+	S3ForcePathStyle bool   `yaml:"force-path-style"`
 }
 
 // DefaultConfig returns a new instance of Config with defaults set.
@@ -174,10 +176,12 @@ type ReplicaConfig struct {
 	ValidationInterval     time.Duration `yaml:"validation-interval"`
 
 	// S3 settings
-	AccessKeyID     string `yaml:"access-key-id"`
-	SecretAccessKey string `yaml:"secret-access-key"`
-	Region          string `yaml:"region"`
-	Bucket          string `yaml:"bucket"`
+	AccessKeyID      string `yaml:"access-key-id"`
+	SecretAccessKey  string `yaml:"secret-access-key"`
+	Region           string `yaml:"region"`
+	Bucket           string `yaml:"bucket"`
+	Endpoint         string `yaml:"endpoint"`
+	S3ForcePathStyle bool   `yaml:"force-path-style"`
 }
 
 // NewReplicaFromURL returns a new Replica instance configured from a URL.
@@ -347,6 +351,16 @@ func newS3ReplicaFromConfig(db *litestream.DB, c *Config, dbc *DBConfig, rc *Rep
 	if v := rc.Region; v != "" {
 		region = v
 	}
+	endpoint := c.Endpoint
+	if v := rc.Endpoint; v != "" {
+		endpoint = v
+	}
+	forcePathStyle := c.S3ForcePathStyle
+	if v := rc.S3ForcePathStyle; v {
+		// This is not really correct as will not allow for disabling path style
+		// per replica, if enabled globally
+		forcePathStyle = v
+	}
 
 	// Ensure required settings are set.
 	if bucket == "" {
@@ -358,6 +372,8 @@ func newS3ReplicaFromConfig(db *litestream.DB, c *Config, dbc *DBConfig, rc *Rep
 	r.AccessKeyID = accessKeyID
 	r.SecretAccessKey = secretAccessKey
 	r.Region = region
+	r.Endpoint = endpoint
+	r.S3ForcePathStyle = forcePathStyle
 	r.Bucket = bucket
 	r.Path = path
 

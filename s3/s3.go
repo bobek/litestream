@@ -69,9 +69,11 @@ type Replica struct {
 	SecretAccessKey string
 
 	// S3 bucket information
-	Region string
-	Bucket string
-	Path   string
+	Endpoint         string
+	Region           string
+	Bucket           string
+	Path             string
+	S3ForcePathStyle bool
 
 	// Time between syncs with the shadow WAL.
 	SyncInterval time.Duration
@@ -657,6 +659,8 @@ func (r *Replica) Init(ctx context.Context) (err error) {
 	// Create new AWS session.
 	config := r.config()
 	config.Region = aws.String(region)
+	config.Endpoint = aws.String(r.Endpoint)
+	config.S3ForcePathStyle = aws.Bool(r.S3ForcePathStyle)
 	sess, err := session.NewSession(config)
 	if err != nil {
 		return fmt.Errorf("cannot create aws session: %w", err)
